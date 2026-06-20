@@ -80,16 +80,6 @@ services:
     networks:
       - nota_network
 
-  # ── Certbot (SSL — Let's Encrypt) ─────────────────────────────────────────────
-  certbot:
-    image: certbot/certbot:latest
-    container_name: nota_certbot
-    volumes:
-      - certbot_www:/var/www/certbot
-      - certbot_certs:/etc/letsencrypt
-    # Run manually: docker compose run --rm certbot certonly ...
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done'"
-
 volumes:
   postgres_data:
   certbot_www:

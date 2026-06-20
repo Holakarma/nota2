@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '@core/prisma/prisma.service';
 import { SignUpRequestDto } from './dto/sign-up.dto';
 import { ConfigService } from '@nestjs/config';
-import { hash, verify } from 'argon2';
+import { hash, compare } from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { SignInRequestDto } from './dto/sign-in.dto';
 import { type Request, type Response, type CookieOptions } from 'express';
@@ -97,7 +97,7 @@ export class AuthService {
       throw new ConflictException('User with this login is already esists');
     }
 
-    const passwordHash = await hash(password);
+    const passwordHash = await hash(password, 10);
 
     const user = await this.prisma.$transaction(async (tx) => {
       const createdUser = await tx.user.create({
@@ -165,7 +165,7 @@ export class AuthService {
       throw new NotFoundException('User was not found');
     }
 
-    const isValidPassword = await verify(user.passwordHash, password);
+    const isValidPassword = await compare(password, user.passwordHash);
 
     if (!isValidPassword) {
       throw new NotFoundException('User was not found');

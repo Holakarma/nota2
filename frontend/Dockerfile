@@ -4,8 +4,8 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copy dependency manifests first (layer caching)
-COPY package.json ./
-RUN npm i
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # Copy source
 COPY . .

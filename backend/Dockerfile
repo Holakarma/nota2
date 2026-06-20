@@ -4,8 +4,8 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copy dependency manifests first (layer caching)
-COPY package.json ./
-RUN npm i
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # Copy source & prisma schema
 COPY . .
@@ -24,9 +24,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Install only production dependencies
-# COPY package.json package-lock.json ./
-COPY package.json ./
-RUN npm i --omit=dev
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
 
 # Copy built app from builder
 COPY --from=builder /app/dist ./dist
