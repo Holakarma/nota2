@@ -44,12 +44,23 @@ services:
             - 443:443
         networks:
             - app-network
+    
+    certbot: 
+        image: certbot/certbot
+        depends_on:
+            - nginx
+        volumes:
+            - etc-letsencrypt:/etc/letsencrypt
+            - www-html:/var/www/html
+        command: certonly --webroot -webroot-path=/var/www/html --keep-until-expiring --agree-tos --email holakarmos@gmail.com --no-eff-email -d nota-tg-bot.ru  # --staging for tests --keep-until-expiring istead of --force-renewal
+        networks:
+            - app-network
 
 volumes:
     postgres_data:
-    certificates:
-    data:
+    etc-letsencrypt:
+    www-html:
 
 networks:
-  app-network:
-    driver: bridge
+    app-network:
+        driver: bridge
