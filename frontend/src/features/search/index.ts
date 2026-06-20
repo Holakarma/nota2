@@ -1,0 +1,1 @@
+export { SearchResult } from './ui/search-result'

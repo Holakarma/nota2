@@ -1,0 +1,1839 @@
+{
+	"openapi": "3.0.0",
+	"paths": {
+		"/api/auth/sign-up": {
+			"post": {
+				"description": "create user row",
+				"operationId": "AuthController_signUp",
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SignUpRequestDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AuthResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors"
+					},
+					"409": {
+						"description": "User with this login is already esists"
+					}
+				},
+				"summary": "register",
+				"tags": ["auth"]
+			}
+		},
+		"/api/auth/sign-in": {
+			"post": {
+				"description": "get tokens pair",
+				"operationId": "AuthController_signIn",
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SignInRequestDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AuthResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors"
+					},
+					"404": {
+						"description": "User not found"
+					}
+				},
+				"summary": "login",
+				"tags": ["auth"]
+			}
+		},
+		"/api/auth/refresh": {
+			"post": {
+				"description": "get tokens pair by refresh token",
+				"operationId": "AuthController_refresh",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AuthResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "invalid refresh token"
+					}
+				},
+				"summary": "refresh tokens",
+				"tags": ["auth"]
+			}
+		},
+		"/api/auth/sign-out": {
+			"post": {
+				"description": "delete reshresh token cookie",
+				"operationId": "AuthController_logout",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"description": ""
+					}
+				},
+				"summary": "logout",
+				"tags": ["auth"]
+			}
+		},
+		"/api/auth/me": {
+			"get": {
+				"operationId": "AuthController_me",
+				"parameters": [],
+				"responses": {
+					"401": {
+						"description": "invalid refresh token"
+					}
+				},
+				"summary": "get current user",
+				"tags": ["auth"]
+			}
+		},
+		"/api/stream": {
+			"post": {
+				"description": "Creates a stream for the authorized user. Stream names are unique per user after normalization.",
+				"operationId": "StreamController_create",
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateStreamDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Stream was created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/StreamResponseDto"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors"
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"409": {
+						"description": "Stream with this name already exists"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "create stream",
+				"tags": ["stream"]
+			},
+			"get": {
+				"description": "Returns authorized user streams ordered by name.",
+				"operationId": "StreamController_findAll",
+				"parameters": [
+					{
+						"name": "cursor",
+						"required": false,
+						"in": "query",
+						"description": "Cursor from page.nextCursor. The cursor is a base64url-encoded JSON string with a stream id.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "limit",
+						"required": false,
+						"in": "query",
+						"description": "Maximum number of items to return.",
+						"schema": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100,
+							"default": 20
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Paginated authorized user streams",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"result": {
+											"type": "array",
+											"items": {
+												"$ref": "#/components/schemas/StreamResponseDto"
+											}
+										},
+										"page": {
+											"type": "object",
+											"properties": {
+												"hasNextPage": {
+													"type": "boolean",
+													"example": true
+												},
+												"nextCursor": {
+													"type": "string",
+													"nullable": true,
+													"example": "IjFhNmI0M2YzLWQwNjQtNGU4My1hOWVjLWZiYTczNDUzYTQ5YyI"
+												}
+											},
+											"required": [
+												"hasNextPage",
+												"nextCursor"
+											]
+										}
+									},
+									"required": ["result", "page"]
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors or invalid cursor"
+					},
+					"401": {
+						"description": "User is not authorized"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "get streams",
+				"tags": ["stream"]
+			}
+		},
+		"/api/stream/similar": {
+			"get": {
+				"description": "Returns authorized user streams ranked by name similarity to the query string. Ranking combines multilingual PostgreSQL full-text search and trigram word similarity.",
+				"operationId": "StreamController_findSimilar",
+				"parameters": [
+					{
+						"name": "query",
+						"required": true,
+						"in": "query",
+						"description": "Text used to find the closest streams by name.",
+						"schema": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 500
+						}
+					},
+					{
+						"name": "limit",
+						"required": false,
+						"in": "query",
+						"description": "Maximum number of similar streams to return.",
+						"schema": {
+							"type": "integer",
+							"minimum": 2,
+							"maximum": 100,
+							"default": 5
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Closest authorized user streams",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/StreamResponseDto"
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors"
+					},
+					"401": {
+						"description": "User is not authorized"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "find similar streams",
+				"tags": ["stream"]
+			}
+		},
+		"/api/stream/{id}": {
+			"get": {
+				"description": "Returns one stream by id.",
+				"operationId": "StreamController_findOne",
+				"parameters": [
+					{
+						"name": "id",
+						"required": true,
+						"in": "path",
+						"description": "Stream id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Stream found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/StreamResponseDto"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Stream not found"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "get stream by id",
+				"tags": ["stream"]
+			},
+			"patch": {
+				"description": "Updates stream name.",
+				"operationId": "StreamController_update",
+				"parameters": [
+					{
+						"name": "id",
+						"required": true,
+						"in": "path",
+						"description": "Stream id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateStreamDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Stream was updated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/StreamResponseDto"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors"
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Stream not found"
+					},
+					"409": {
+						"description": "Stream with this name already exists"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "update stream",
+				"tags": ["stream"]
+			},
+			"delete": {
+				"description": "Deletes a stream owned by the user. Notes are not deleted; only note-stream links are removed by the database relation.",
+				"operationId": "StreamController_remove",
+				"parameters": [
+					{
+						"name": "id",
+						"required": true,
+						"in": "path",
+						"description": "Stream id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Stream was deleted",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "boolean",
+									"example": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Stream not found"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "delete stream",
+				"tags": ["stream"]
+			}
+		},
+		"/api/stream/{streamId}/notes": {
+			"get": {
+				"description": "Returns note cards linked to the stream.",
+				"operationId": "NoteStreamController_findNotes",
+				"parameters": [
+					{
+						"name": "streamId",
+						"required": true,
+						"in": "path",
+						"description": "Stream id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					},
+					{
+						"name": "cursor",
+						"required": false,
+						"in": "query",
+						"description": "Cursor from page.nextCursor. The cursor is a base64url-encoded JSON string with a note id.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "limit",
+						"required": false,
+						"in": "query",
+						"description": "Maximum number of items to return.",
+						"schema": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100,
+							"default": 20
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Paginated stream notes",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"result": {
+											"type": "array",
+											"items": {
+												"$ref": "#/components/schemas/NoteWithStreamsResponseDto"
+											}
+										},
+										"page": {
+											"type": "object",
+											"properties": {
+												"hasNextPage": {
+													"type": "boolean",
+													"example": true
+												},
+												"nextCursor": {
+													"type": "string",
+													"nullable": true,
+													"example": "IjhlMmQ1YzlhLTJiMTktNGQyZi05YTRlLTdkMWMyZjZhOWIxMCI"
+												}
+											},
+											"required": [
+												"hasNextPage",
+												"nextCursor"
+											]
+										}
+									},
+									"required": ["result", "page"]
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors or invalid cursor"
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Stream not found"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "get stream notes",
+				"tags": ["note-stream"]
+			}
+		},
+		"/api/stream/{streamId}/notes/{noteId}": {
+			"post": {
+				"description": "Links a user note to a user stream. Existing links are kept idempotently.",
+				"operationId": "NoteStreamController_attachNote",
+				"parameters": [
+					{
+						"name": "streamId",
+						"required": true,
+						"in": "path",
+						"description": "Stream id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					},
+					{
+						"name": "noteId",
+						"required": true,
+						"in": "path",
+						"description": "Note id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"201": {
+						"description": "Note was attached to stream",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "boolean",
+									"example": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Stream or note not found"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "attach note to stream",
+				"tags": ["note-stream"]
+			},
+			"delete": {
+				"description": "Removes only the note-stream link. If the note has no streams after that, it remains a note without stream.",
+				"operationId": "NoteStreamController_detachNote",
+				"parameters": [
+					{
+						"name": "streamId",
+						"required": true,
+						"in": "path",
+						"description": "Stream id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					},
+					{
+						"name": "noteId",
+						"required": true,
+						"in": "path",
+						"description": "Note id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Note was detached from stream",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "boolean",
+									"example": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Stream, note, or link not found"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "detach note from stream",
+				"tags": ["note-stream"]
+			}
+		},
+		"/api/note": {
+			"post": {
+				"description": "Creates a note for the authorized user. Optional streamIds link existing user streams, optional streamNames create missing streams automatically and link them. The service stores full content in bodyMarkdown, stores markdown-stripped text in bodyText, uses the first 20 plain-text characters as previewText, and sets sourceType to WEB.",
+				"operationId": "NoteController_create",
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateNoteDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Note was created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "boolean",
+									"example": true
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors"
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Stream not found"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "create note",
+				"tags": ["note"]
+			},
+			"get": {
+				"description": "Returns authorized user note cards with linked stream ids and names ordered by createdAt desc. Optionally filters notes by linked streamId. Uses cursor pagination: pass page.nextCursor from the previous response as cursor to get the next page.",
+				"operationId": "NoteController_findAll",
+				"parameters": [
+					{
+						"name": "streamId",
+						"required": false,
+						"in": "query",
+						"description": "Return only notes linked with this stream id.",
+						"schema": {
+							"format": "uuid",
+							"example": "1a6b43f3-d064-4e83-a9ec-fba73453a49c",
+							"type": "string"
+						}
+					},
+					{
+						"name": "cursor",
+						"required": false,
+						"in": "query",
+						"description": "Cursor from page.nextCursor. The cursor is a base64url-encoded JSON string with a note id.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "limit",
+						"required": false,
+						"in": "query",
+						"description": "Maximum number of notes to return.",
+						"schema": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100,
+							"default": 20
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Paginated authorized user notes",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"result": {
+											"type": "array",
+											"items": {
+												"$ref": "#/components/schemas/NoteWithStreamsResponseDto"
+											}
+										},
+										"page": {
+											"type": "object",
+											"properties": {
+												"hasNextPage": {
+													"type": "boolean",
+													"example": true
+												},
+												"nextCursor": {
+													"type": "string",
+													"nullable": true,
+													"example": "IjhlMmQ1YzlhLTJiMTktNGQyZi05YTRlLTdkMWMyZjZhOWIxMCI"
+												}
+											},
+											"required": [
+												"hasNextPage",
+												"nextCursor"
+											]
+										}
+									},
+									"required": ["result", "page"]
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors or invalid cursor"
+					},
+					"401": {
+						"description": "User is not authorized"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "get notes",
+				"tags": ["note"]
+			}
+		},
+		"/api/note/similar": {
+			"get": {
+				"description": "Returns authorized user note cards ranked by content similarity to the query string. Ranking combines multilingual PostgreSQL full-text search and trigram word similarity.",
+				"operationId": "NoteController_findSimilar",
+				"parameters": [
+					{
+						"name": "query",
+						"required": true,
+						"in": "query",
+						"description": "Text used to find the closest notes by content.",
+						"schema": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 500
+						}
+					},
+					{
+						"name": "limit",
+						"required": false,
+						"in": "query",
+						"description": "Maximum number of similar notes to return.",
+						"schema": {
+							"type": "integer",
+							"minimum": 2,
+							"maximum": 100,
+							"default": 5
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Closest authorized user notes",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/NoteWithStreamsResponseDto"
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors"
+					},
+					"401": {
+						"description": "User is not authorized"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "find similar notes",
+				"tags": ["note"]
+			}
+		},
+		"/api/note/{id}": {
+			"get": {
+				"description": "Returns one note by id.",
+				"operationId": "NoteController_findOne",
+				"parameters": [
+					{
+						"name": "id",
+						"required": true,
+						"in": "path",
+						"description": "Note id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Note found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NoteResponseDto"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Note not found"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "get note by id",
+				"tags": ["note"]
+			},
+			"patch": {
+				"description": "Updates note content. The service updates bodyMarkdown, bodyText, and previewText.",
+				"operationId": "NoteController_update",
+				"parameters": [
+					{
+						"name": "id",
+						"required": true,
+						"in": "path",
+						"description": "Note id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateNoteDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Note was updated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NoteResponseDto"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors"
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Note not found"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "update note",
+				"tags": ["note"]
+			},
+			"delete": {
+				"description": "Deletes a note.",
+				"operationId": "NoteController_remove",
+				"parameters": [
+					{
+						"name": "id",
+						"required": true,
+						"in": "path",
+						"description": "Note id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Note was deleted",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "boolean",
+									"example": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Note not found"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "delete note",
+				"tags": ["note"]
+			}
+		},
+		"/api/chat": {
+			"post": {
+				"description": "Creates a chat for the authorized user and optional streamId. Optional streamId must belong to the user. Returns conflict if this chat already exists.",
+				"operationId": "ChatController_create",
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateChatDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Chat was created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ChatResponseDto"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors"
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Stream not found"
+					},
+					"409": {
+						"description": "Chat already exists"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "create chat",
+				"tags": ["chat"]
+			},
+			"put": {
+				"description": "Creates or returns the single chat for the authorized user and optional streamId. Optional streamId must belong to the user.",
+				"operationId": "ChatController_ensure",
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateChatDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Existing or newly created chat",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ChatResponseDto"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors"
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Stream not found"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "ensure chat",
+				"tags": ["chat"]
+			},
+			"get": {
+				"description": "Returns authorized user chats ordered by updatedAt desc. Uses cursor pagination.",
+				"operationId": "ChatController_findAll",
+				"parameters": [
+					{
+						"name": "cursor",
+						"required": false,
+						"in": "query",
+						"description": "Cursor from page.nextCursor. The cursor is a base64url-encoded JSON string with a chat id.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "limit",
+						"required": false,
+						"in": "query",
+						"description": "Maximum number of items to return.",
+						"schema": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100,
+							"default": 20
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Paginated authorized user chats",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"result": {
+											"type": "array",
+											"items": {
+												"$ref": "#/components/schemas/ChatResponseDto"
+											}
+										},
+										"page": {
+											"type": "object",
+											"properties": {
+												"hasNextPage": {
+													"type": "boolean",
+													"example": true
+												},
+												"nextCursor": {
+													"type": "string",
+													"nullable": true,
+													"example": "IjJkMjAzYTEzLTNlNzgtNGZjYi1hMzFkLTZkY2JkZjllYzg4ZSI"
+												}
+											},
+											"required": [
+												"hasNextPage",
+												"nextCursor"
+											]
+										}
+									},
+									"required": ["result", "page"]
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors or invalid cursor"
+					},
+					"401": {
+						"description": "User is not authorized"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "get chats",
+				"tags": ["chat"]
+			}
+		},
+		"/api/chat/{chatId}/messages": {
+			"get": {
+				"description": "Returns messages of one authorized user chat ordered by createdAt desc.",
+				"operationId": "ChatController_findMessages",
+				"parameters": [
+					{
+						"name": "chatId",
+						"required": true,
+						"in": "path",
+						"description": "Chat id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					},
+					{
+						"name": "cursor",
+						"required": false,
+						"in": "query",
+						"description": "Cursor from page.nextCursor. The cursor is a base64url-encoded JSON string with a chat message id.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "limit",
+						"required": false,
+						"in": "query",
+						"description": "Maximum number of items to return.",
+						"schema": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100,
+							"default": 20
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Paginated chat messages",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"result": {
+											"type": "array",
+											"items": {
+												"$ref": "#/components/schemas/ChatMessageResponseDto"
+											}
+										},
+										"page": {
+											"type": "object",
+											"properties": {
+												"hasNextPage": {
+													"type": "boolean",
+													"example": true
+												},
+												"nextCursor": {
+													"type": "string",
+													"nullable": true,
+													"example": "IjVlNmFiNTZmLTIwNWMtNGZkMS05ZDZiLWJkZGRmYjgxNmMzOSI"
+												}
+											},
+											"required": [
+												"hasNextPage",
+												"nextCursor"
+											]
+										}
+									},
+									"required": ["result", "page"]
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors or invalid cursor"
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Chat not found"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "get chat messages",
+				"tags": ["chat"]
+			},
+			"post": {
+				"description": "Creates one user message with the original bodyMarkdown, parses leading and trailing lines that start with \":\" as stream names, creates one note from the remaining markdown, links the note with the chat stream and parsed streams, and stores only newly created streams in the message result.",
+				"operationId": "ChatController_createMessage",
+				"parameters": [
+					{
+						"name": "chatId",
+						"required": true,
+						"in": "path",
+						"description": "Chat id",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateChatMessageDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Chat message was processed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ChatMessageResponseDto"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation errors or empty note body after stream service lines"
+					},
+					"401": {
+						"description": "User is not authorized"
+					},
+					"404": {
+						"description": "Chat not found"
+					}
+				},
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"summary": "send chat message",
+				"tags": ["chat"]
+			}
+		}
+	},
+	"info": {
+		"title": "Nota API",
+		"description": "Nota backend API",
+		"version": "1.0",
+		"contact": {}
+	},
+	"tags": [],
+	"servers": [],
+	"components": {
+		"securitySchemes": {
+			"bearer": {
+				"scheme": "bearer",
+				"bearerFormat": "JWT",
+				"type": "http"
+			}
+		},
+		"schemas": {
+			"SignUpRequestDto": {
+				"type": "object",
+				"properties": {
+					"login": {
+						"type": "string",
+						"description": "User login",
+						"example": "user-login",
+						"minLength": 8,
+						"maxLength": 255
+					},
+					"password": {
+						"type": "string",
+						"description": "User password",
+						"example": "strong-password",
+						"minLength": 8,
+						"maxLength": 128
+					}
+				},
+				"required": ["login", "password"]
+			},
+			"AuthResponse": {
+				"type": "object",
+				"properties": {
+					"accessToken": {
+						"type": "string",
+						"description": "JWT access token",
+						"example": "etrf7AG7iFA78FAdsfaF..."
+					}
+				},
+				"required": ["accessToken"]
+			},
+			"SignInRequestDto": {
+				"type": "object",
+				"properties": {
+					"login": {
+						"type": "string",
+						"description": "User login",
+						"example": "user-login",
+						"minLength": 8,
+						"maxLength": 255
+					},
+					"password": {
+						"type": "string",
+						"description": "User password",
+						"example": "strong-password",
+						"minLength": 8,
+						"maxLength": 128
+					}
+				},
+				"required": ["login", "password"]
+			},
+			"StreamResponseDto": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"example": "1a6b43f3-d064-4e83-a9ec-fba73453a49c"
+					},
+					"userId": {
+						"type": "string",
+						"format": "uuid",
+						"example": "cecb38fb-dc6b-4b5f-9cf7-e733dbadbe7e"
+					},
+					"name": {
+						"type": "string",
+						"example": "work"
+					},
+					"normalizedName": {
+						"type": "string",
+						"example": "work"
+					},
+					"createdAt": {
+						"format": "date-time",
+						"type": "string",
+						"example": "2026-04-29T10:00:00.000Z"
+					},
+					"updatedAt": {
+						"format": "date-time",
+						"type": "string",
+						"example": "2026-04-29T10:00:00.000Z"
+					}
+				},
+				"required": [
+					"id",
+					"userId",
+					"name",
+					"normalizedName",
+					"createdAt",
+					"updatedAt"
+				]
+			},
+			"FindSimilarStreamsDto": {
+				"type": "object",
+				"properties": {
+					"query": {
+						"type": "string",
+						"description": "Text used to find the closest streams by name",
+						"minLength": 1,
+						"maxLength": 500,
+						"example": "work projects"
+					},
+					"limit": {
+						"type": "object",
+						"description": "Maximum number of similar streams to return",
+						"minimum": 2,
+						"maximum": 100,
+						"default": 5,
+						"example": 5
+					}
+				},
+				"required": ["query"]
+			},
+			"CreateStreamDto": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "stream name",
+						"example": "work",
+						"minLength": 1,
+						"maxLength": 128
+					}
+				},
+				"required": ["name"]
+			},
+			"UpdateStreamDto": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "stream new name",
+						"example": "personal",
+						"minLength": 1,
+						"maxLength": 128
+					}
+				},
+				"required": ["name"]
+			},
+			"NoteListStreamResponseDto": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"example": "1a6b43f3-d064-4e83-a9ec-fba73453a49c"
+					},
+					"name": {
+						"type": "string",
+						"example": "work"
+					}
+				},
+				"required": ["id", "name"]
+			},
+			"NoteWithStreamsResponseDto": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"example": "8e2d5c9a-2b19-4d2f-9a4e-7d1c2f6a9b10"
+					},
+					"previewText": {
+						"type": "string",
+						"example": "new note"
+					},
+					"streams": {
+						"description": "streams linked with this note",
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/NoteListStreamResponseDto"
+						}
+					},
+					"updatedAt": {
+						"format": "date-time",
+						"type": "string",
+						"example": "2026-04-29T10:00:00.000Z"
+					},
+					"createdAt": {
+						"format": "date-time",
+						"type": "string",
+						"example": "2026-04-29T10:00:00.000Z"
+					}
+				},
+				"required": [
+					"id",
+					"previewText",
+					"streams",
+					"updatedAt",
+					"createdAt"
+				]
+			},
+			"NoteSourceType": {
+				"type": "string",
+				"enum": ["WEB", "TELEGRAM"]
+			},
+			"NoteResponseDto": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"example": "8e2d5c9a-2b19-4d2f-9a4e-7d1c2f6a9b10"
+					},
+					"userId": {
+						"type": "string",
+						"format": "uuid",
+						"example": "cecb38fb-dc6b-4b5f-9cf7-e733dbadbe7e"
+					},
+					"bodyMarkdown": {
+						"type": "string",
+						"example": "new note"
+					},
+					"bodyText": {
+						"type": "string",
+						"example": "new note"
+					},
+					"previewText": {
+						"type": "string",
+						"example": "new note"
+					},
+					"streams": {
+						"description": "streams linked with this note",
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/NoteListStreamResponseDto"
+						}
+					},
+					"sourceType": {
+						"example": "WEB",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/NoteSourceType"
+							}
+						]
+					},
+					"sourceMeta": {
+						"type": "object",
+						"additionalProperties": true,
+						"example": {}
+					},
+					"createdAt": {
+						"format": "date-time",
+						"type": "string",
+						"example": "2026-04-29T10:00:00.000Z"
+					},
+					"updatedAt": {
+						"format": "date-time",
+						"type": "string",
+						"example": "2026-04-29T10:00:00.000Z"
+					},
+					"deletedAt": {
+						"type": "object",
+						"format": "date-time",
+						"nullable": true,
+						"example": null
+					},
+					"sourceMessageId": {
+						"type": "object",
+						"format": "uuid",
+						"nullable": true,
+						"example": "5e6ab56f-205c-4fd1-9d6b-bdddfb816c39"
+					}
+				},
+				"required": [
+					"id",
+					"userId",
+					"bodyMarkdown",
+					"bodyText",
+					"previewText",
+					"streams",
+					"sourceType",
+					"sourceMeta",
+					"createdAt",
+					"updatedAt"
+				]
+			},
+			"FindSimilarNotesDto": {
+				"type": "object",
+				"properties": {
+					"query": {
+						"type": "string",
+						"description": "Text used to find the closest notes by content",
+						"minLength": 1,
+						"maxLength": 500,
+						"example": "meeting notes about project deadlines"
+					},
+					"limit": {
+						"type": "object",
+						"description": "Maximum number of similar notes to return",
+						"minimum": 2,
+						"maximum": 100,
+						"default": 5,
+						"example": 5
+					}
+				},
+				"required": ["query"]
+			},
+			"CreateNoteDto": {
+				"type": "object",
+				"properties": {
+					"bodyMarkdown": {
+						"type": "string",
+						"description": "note content",
+						"example": "new note",
+						"minLength": 1,
+						"maxLength": 32768
+					},
+					"streamIds": {
+						"description": "existing stream ids to link with this note",
+						"maxItems": 20,
+						"example": ["1a6b43f3-d064-4e83-a9ec-fba73453a49c"],
+						"type": "array",
+						"items": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				},
+				"required": ["bodyMarkdown"]
+			},
+			"UpdateNoteDto": {
+				"type": "object",
+				"properties": {
+					"bodyMarkdown": {
+						"type": "string",
+						"description": "note new content",
+						"example": "note new content",
+						"minLength": 1,
+						"maxLength": 32768
+					}
+				},
+				"required": ["bodyMarkdown"]
+			},
+			"ChatResponseDto": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"example": "2d203a13-3e78-4fcb-a31d-6dcbdf9ec88e"
+					},
+					"userId": {
+						"type": "string",
+						"format": "uuid",
+						"example": "cecb38fb-dc6b-4b5f-9cf7-e733dbadbe7e"
+					},
+					"streamId": {
+						"type": "object",
+						"format": "uuid",
+						"nullable": true,
+						"example": "1a6b43f3-d064-4e83-a9ec-fba73453a49c"
+					},
+					"createdAt": {
+						"format": "date-time",
+						"type": "string",
+						"example": "2026-05-03T10:00:00.000Z"
+					},
+					"updatedAt": {
+						"format": "date-time",
+						"type": "string",
+						"example": "2026-05-03T10:00:00.000Z"
+					}
+				},
+				"required": ["id", "userId", "createdAt", "updatedAt"]
+			},
+			"ChatMessageRole": {
+				"type": "string",
+				"enum": ["USER", "SYSTEM"]
+			},
+			"ChatMessageResultNoteResponseDto": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"example": "8e2d5c9a-2b19-4d2f-9a4e-7d1c2f6a9b10"
+					},
+					"previewText": {
+						"type": "string",
+						"description": "markdown-stripped preview text of the created note",
+						"example": "Need to follow up with Alex tomorrow"
+					},
+					"streamNames": {
+						"description": "names of all streams linked to the created note",
+						"example": ["work"],
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				},
+				"required": ["id", "previewText", "streamNames"]
+			},
+			"ChatMessageStreamResponseDto": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"example": "1a6b43f3-d064-4e83-a9ec-fba73453a49c"
+					},
+					"name": {
+						"type": "string",
+						"example": "work"
+					}
+				},
+				"required": ["id", "name"]
+			},
+			"ChatMessageResultResponseDto": {
+				"type": "object",
+				"properties": {
+					"note": {
+						"description": "note created from this message",
+						"nullable": true,
+						"type": "object",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ChatMessageResultNoteResponseDto"
+							}
+						]
+					},
+					"streams": {
+						"description": "streams newly created while processing this message",
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/ChatMessageStreamResponseDto"
+						}
+					}
+				},
+				"required": ["note", "streams"]
+			},
+			"ChatMessageResponseDto": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"example": "5e6ab56f-205c-4fd1-9d6b-bdddfb816c39"
+					},
+					"chatId": {
+						"type": "string",
+						"format": "uuid",
+						"example": "2d203a13-3e78-4fcb-a31d-6dcbdf9ec88e"
+					},
+					"role": {
+						"example": "USER",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ChatMessageRole"
+							}
+						]
+					},
+					"bodyMarkdown": {
+						"type": "string",
+						"description": "original user message markdown",
+						"example": ":work\nNeed to follow up with Alex tomorrow"
+					},
+					"replyToMessageId": {
+						"type": "object",
+						"format": "uuid",
+						"nullable": true,
+						"example": null
+					},
+					"result": {
+						"description": "message processing result",
+						"nullable": true,
+						"type": "object",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ChatMessageResultResponseDto"
+							}
+						]
+					},
+					"createdAt": {
+						"format": "date-time",
+						"type": "string",
+						"example": "2026-05-03T10:00:00.000Z"
+					}
+				},
+				"required": [
+					"id",
+					"chatId",
+					"role",
+					"bodyMarkdown",
+					"result",
+					"createdAt"
+				]
+			},
+			"CreateChatDto": {
+				"type": "object",
+				"properties": {
+					"streamId": {
+						"type": "string",
+						"description": "existing stream id to bind this chat to",
+						"format": "uuid",
+						"example": "1a6b43f3-d064-4e83-a9ec-fba73453a49c"
+					}
+				}
+			},
+			"CreateChatMessageDto": {
+				"type": "object",
+				"properties": {
+					"bodyMarkdown": {
+						"type": "string",
+						"description": "Full user message markdown. Non-blank leading and trailing lines that start with \":\" are parsed as stream names and excluded from the created note body.",
+						"example": ":work\nNeed to follow up with Alex tomorrow",
+						"minLength": 1,
+						"maxLength": 32768
+					}
+				},
+				"required": ["bodyMarkdown"]
+			}
+		}
+	}
+}
