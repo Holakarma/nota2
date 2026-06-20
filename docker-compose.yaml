@@ -39,6 +39,9 @@ services:
             - backend
         build:
             context: ./frontend
+        volumes:
+            - certificates:/etc/letsencrypt
+            - data:/data/letsencrypt
         ports:
             - 80:80
             - 443:443
@@ -50,16 +53,16 @@ services:
         depends_on:
             - nginx
         volumes:
-            - etc-letsencrypt:/etc/letsencrypt
-            - www-html:/var/www/html
+            - certificates:/etc/letsencrypt
+            - data:/data/letsencrypt
         command: certonly --webroot -webroot-path=/var/www/html --keep-until-expiring --agree-tos --email holakarmos@gmail.com --no-eff-email -d nota-tg-bot.ru  # --staging for tests --keep-until-expiring istead of --force-renewal
         networks:
             - app-network
 
 volumes:
     postgres_data:
-    etc-letsencrypt:
-    www-html:
+    certificates:
+    data:
 
 networks:
     app-network:
