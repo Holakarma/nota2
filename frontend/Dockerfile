@@ -12,10 +12,6 @@ COPY . .
 
 # Build Vite app
 # VITE_API_BASE_URL is injected at build time via --build-arg
-ARG VITE_API_BASE_URL=/api
-ARG VITE_API_REFRESH_PATH=/api/auth/refresh
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-ENV VITE_API_REFRESH_PATH=$VITE_API_REFRESH_PATH
 
 RUN npm run build
 
