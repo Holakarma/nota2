@@ -39,6 +39,9 @@ services:
             - backend
         build:
             context: ./frontend
+        environment:
+            VITE_API_BASE_URL: https://nota-tg-bot.ru
+            VITE_API_REFRESH_PATH: /api/auth/refresh
         volumes:
             - etc-letcencrypt:/etc/letsencrypt
             - www-html:/var/www/html

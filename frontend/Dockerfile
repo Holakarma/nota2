@@ -10,8 +10,6 @@ RUN npm ci
 # Copy source
 COPY . .
 
-# Build Vite app
-# VITE_API_BASE_URL is injected at build time via --build-arg
 
 RUN npm run build
 
