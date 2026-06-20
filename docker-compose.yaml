@@ -55,7 +55,7 @@ services:
         volumes:
             - certificates:/etc/letsencrypt
             - data:/data/letsencrypt
-        command: certonly --webroot -webroot-path=/var/www/html --keep-until-expiring --agree-tos --email holakarmos@gmail.com --no-eff-email -d nota-tg-bot.ru  # --staging for tests --keep-until-expiring istead of --force-renewal
+        command: certonly --webroot -webroot-path=/data/letsencrypt --keep-until-expiring --agree-tos --email holakarmos@gmail.com --no-eff-email -d nota-tg-bot.ru  # --staging for tests --keep-until-expiring istead of --force-renewal
         networks:
             - app-network
 
