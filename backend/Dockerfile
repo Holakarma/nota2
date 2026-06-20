@@ -16,24 +16,6 @@ RUN npx prisma generate
 # Build NestJS app
 RUN npm run build
 
-# ─── Stage 2: Production ──────────────────────────────────────────────────────
-FROM node:22-alpine AS production
-
-WORKDIR /app
-
-ENV NODE_ENV=production
-
-# Install only production dependencies
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
-
-# Copy built app from builder
-COPY --from=builder /app/dist ./dist
-
-# Copy Prisma schema & generated client (needed at runtime)
-COPY --from=builder /app/src/core/prisma/generated ./src/core/prisma/generated
-COPY --from=builder /app/prisma ./prisma
-
 # Copy entrypoint script
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh

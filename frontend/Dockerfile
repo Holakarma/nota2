@@ -20,16 +20,13 @@ ENV VITE_API_REFRESH_PATH=$VITE_API_REFRESH_PATH
 RUN npm run build
 
 # ─── Stage 2: Nginx ───────────────────────────────────────────────────────────
-FROM nginx:1.27-alpine AS production
-
-# Remove default nginx config
-RUN rm /etc/nginx/conf.d/default.conf
+FROM nginx:stable-alpine
 
 # Copy built SPA
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx config for SPA routing
-COPY nginx.conf /etc/nginx/conf.d/app.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
