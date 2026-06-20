@@ -10,6 +10,12 @@ RUN npm ci
 # Copy source
 COPY . .
 
+# Build Vite app
+# VITE_API_BASE_URL is injected at build time via --build-arg
+ARG VITE_API_BASE_URL=https://nota-tg-bot.ru
+ARG VITE_API_REFRESH_PATH=/api/auth/refresh
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_API_REFRESH_PATH=$VITE_API_REFRESH_PATH
 
 RUN npm run build
 
